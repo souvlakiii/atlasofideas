@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas of Ideas — Multi-Layer Constellation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Nunito+Sans:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060610;
+  --bg-panel: rgba(8, 8, 18, 0.94);
+  --text: #e8e4df;
+  --text-dim: #908c88;
+  --text-muted: #555260;
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.15);
+  --border: rgba(255,255,255,0.06);
+  --border-focus: rgba(201,168,76,0.3);
+  --c-influence: #3d8ef0;
+  --c-opposition: #e85d5d;
+  --c-synthesis: #9b7ae8;
+  --c-reinterpret: #2dbf8a;
+  --t-body: #e8785d;
+  --t-language: #5dc4e8;
+  --t-power: #e8c95d;
+  --t-desire: #e85da8;
+  --t-ethics: #7ae87a;
+  --t-knowledge: #b89aff;
+  --t-existence: #ff9e6d;
+  --t-aesthetics: #6dccff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Nunito Sans',sans-serif; overflow:hidden; height:100vh; width:100vw; user-select:none; }
+canvas#nebula { position:fixed; inset:0; z-index:0; pointer-events:none; }
+#graph-container { position:fixed; inset:0; z-index:1; }
+svg#graph { width:100%; height:100%; cursor:grab; }
+svg#graph:active { cursor:grabbing; }
+.header { position:fixed; top:0; left:0; right:0; z-index:100; padding:20px 28px; display:flex; align-items:center; justify-content:space-between; background:linear-gradient(to bottom,rgba(6,6,16,.97) 60%,transparent); pointer-events:none; }
+.header > * { pointer-events:auto; }
+.logo { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:300; letter-spacing:4px; text-transform:uppercase; color:var(--gold); }
+.logo em { font-weight:600; font-style:italic; letter-spacing:1px; }
+.search-wrap { position:relative; width:260px; }
+.search-wrap input { width:100%; padding:9px 14px 9px 36px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:22px; color:var(--text); font-family:'Nunito Sans',sans-serif; font-size:12.5px; outline:none; transition:all .3s; }
+.search-wrap input::placeholder { color:var(--text-muted); }
+.search-wrap input:focus { border-color:var(--border-focus); background:rgba(255,255,255,.07); }
+.search-wrap .ico { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:13px; }
+.layer-toggle { position:fixed; top:20px; right:28px; z-index:100; display:flex; flex-direction:column; gap:6px; padding:14px 16px; background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; backdrop-filter:blur(20px); }
+.layer-toggle-title { font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px; }
+.layer-btn { display:flex; align-items:center; gap:9px; padding:6px 10px; border-radius:8px; background:none; border:none; color:var(--text-dim); font-family:'Nunito Sans',sans-serif; font-size:12px; cursor:pointer; transition:all .2s; }
+.layer-btn:hover { background:rgba(255,255,255,.04); }
+.layer-btn.active { color:var(--text); }
+.layer-btn .dot { width:10px; height:10px; border-radius:50%; border:1.5px solid; transition:all .25s; }
+.layer-btn.active .dot { box-shadow:0 0 6px currentColor; }
+.bottom-bar { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:100; display:flex; gap:5px; padding:7px 11px; background:var(--bg-panel); border:1px solid var(--border); border-radius:26px; backdrop-filter:blur(20px); }
+.era-chip { padding:5px 13px; font-size:10.5px; font-family:'Nunito Sans',sans-serif; letter-spacing:.5px; border:1px solid var(--border); border-radius:18px; background:transparent; color:var(--text-muted); cursor:pointer; text-transform:uppercase; transition:all .25s; white-space:nowrap; }
+.era-chip:hover { border-color:rgba(201,168,76,.25); color:var(--text-dim); }
+.era-chip.active { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); }
+.legend { position:fixed; bottom:20px; left:24px; z-index:100; padding:14px 18px; background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; backdrop-filter:blur(20px); display:flex; flex-direction:column; gap:6px; }
+.legend-title { font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:3px; }
+.legend-row { display:flex; align-items:center; gap:9px; font-size:11px; color:var(--text-dim); }
+.legend-line { width:24px; height:2px; border-radius:1px; }
+.panel { position:fixed; top:0; right:-440px; width:420px; height:100vh; z-index:200; background:var(--bg-panel); border-left:1px solid var(--border); backdrop-filter:blur(30px); transition:right .4s cubic-bezier(.16,1,.3,1); overflow-y:auto; padding:32px 26px; }
+.panel.open { right:0; }
+.panel::-webkit-scrollbar { width:3px; }
+.panel::-webkit-scrollbar-thumb { background:var(--text-muted); border-radius:2px; }
+.panel-close { position:absolute; top:18px; right:18px; background:none; border:none; color:var(--text-dim); font-size:18px; cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:all .2s; }
+.panel-close:hover { background:rgba(255,255,255,.05); color:var(--text); }
+.p-era { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:6px; }
+.p-name { font-family:'Cormorant Garamond',serif; font-size:34px; font-weight:300; line-height:1.15; margin-bottom:3px; }
+.p-dates { font-size:12.5px; color:var(--text-dim); margin-bottom:16px; }
+.p-school { display:inline-block; padding:3px 11px; font-size:10.5px; letter-spacing:.4px; border:1px solid var(--border); border-radius:14px; color:var(--text-dim); margin-bottom:16px; }
+.p-summary { font-family:'Cormorant Garamond',serif; font-size:15.5px; font-style:italic; line-height:1.7; color:var(--text-dim); margin-bottom:24px; }
+.p-section { font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; padding-bottom:5px; border-bottom:1px solid var(--border); margin-top:4px; }
+.p-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:24px; }
+.p-tag { padding:4px 11px; font-size:10.5px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:12px; color:var(--text-dim); }
+.p-conn-list { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+.p-conn { display:flex; align-items:center; gap:9px; padding:7px 11px; border-radius:7px; cursor:pointer; transition:background .2s; font-size:12.5px; }
+.p-conn:hover { background:rgba(255,255,255,.03); }
+.p-conn-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.p-conn-type { font-size:9.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-left:auto; }
+.p-concept-ring { width:48px; height:48px; border-radius:50%; border:2px solid; display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:14px; }
+.p-thinkers-grid { display:flex; flex-direction:column; gap:2px; margin-bottom:24px; }
+.p-thinker-row { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; cursor:pointer; transition:background .2s; }
+.p-thinker-row:hover { background:rgba(255,255,255,.03); }
+.p-thinker-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.p-thinker-name { font-size:12.5px; }
+.p-thinker-take { padding:0 12px 12px 28px; font-size:11.5px; color:var(--text-dim); font-style:italic; line-height:1.55; }
+.tip { position:fixed; padding:9px 14px; background:var(--bg-panel); border:1px solid var(--border); border-radius:9px; backdrop-filter:blur(20px); pointer-events:none; z-index:300; opacity:0; transition:opacity .12s; max-width:240px; }
+.tip.on { opacity:1; }
+.tip-name { font-family:'Cormorant Garamond',serif; font-size:15px; }
+.tip-sub { font-size:10.5px; color:var(--text-muted); margin-top:2px; }
+.tip-type { font-size:10px; color:var(--gold); margin-top:3px; }
+.help { position:fixed; bottom:20px; right:24px; z-index:100; padding:10px 15px; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; backdrop-filter:blur(20px); font-size:10.5px; color:var(--text-muted); line-height:1.6; }
+.help kbd { display:inline-block; padding:1px 5px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:3px; font-size:9.5px; font-family:'Nunito Sans',sans-serif; margin:0 1px; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.legend,.bottom-bar,.help,.layer-toggle { animation:fadeUp .5s ease-out both; }
+.bottom-bar{animation-delay:.05s}.help{animation-delay:.1s}.layer-toggle{animation-delay:.15s}
+</style>
+</head>
+<body>
+<canvas id="nebula"></canvas>
+<div id="graph-container"><svg id="graph"></svg></div>
+<div class="header">
+  <div class="logo">Atlas of <em>Ideas</em></div>
+  <div class="search-wrap"><span class="ico">⌕</span><input type="text" id="search" placeholder="Search thinkers, concepts, themes…" /></div>
+</div>
+<div class="layer-toggle" id="layer-toggle"><div class="layer-toggle-title">Layers</div></div>
+<div class="bottom-bar" id="era-bar"></div>
+<div class="legend">
+  <div class="legend-title">Philosopher Links</div>
+  <div class="legend-row"><div class="legend-line" style="background:var(--c-influence)"></div>Influenced</div>
+  <div class="legend-row"><div class="legend-line" style="background:var(--c-opposition)"></div>Opposed</div>
+  <div class="legend-row"><div class="legend-line" style="background:var(--c-synthesis)"></div>Synthesized</div>
+  <div class="legend-row"><div class="legend-line" style="background:var(--c-reinterpret)"></div>Reinterpreted</div>
+  <div style="height:6px"></div>
+  <div class="legend-title">Concept Links</div>
+  <div class="legend-row"><div class="legend-line" style="background:#fff;opacity:.35"></div>Thinker ↔ Theme</div>
+</div>
+<div class="help"><kbd>Click</kbd> node to inspect · <kbd>Scroll</kbd> zoom · <kbd>Drag</kbd> pan · Toggle layers ↗</div>
+<div class="panel" id="panel"><button class="panel-close" id="panel-close">×</button><div id="panel-body"></div></div>
+<div class="tip" id="tip"><div class="tip-name" id="tip-name"></div><div class="tip-sub" id="tip-sub"></div><div class="tip-type" id="tip-type"></div></div>
+
+<script>
+const eras={ancient:{label:'Ancient',color:'#c9a84c'},medieval:{label:'Medieval',color:'#c97b3a'},earlyModern:{label:'Early Modern',color:'#3d8ef0'},modern:{label:'Modern',color:'#9b7ae8'},contemporary:{label:'Contemporary',color:'#2dbf8a'}};
+const themes={body:{label:'Body & Biopolitics',color:'#e8785d',icon:'◉'},language:{label:'Language & Writing',color:'#5dc4e8',icon:'⟐'},power:{label:'Power & Sovereignty',color:'#e8c95d',icon:'⬡'},desire:{label:'Desire & Affect',color:'#e85da8',icon:'◈'},ethics:{label:'Ethics & Justice',color:'#7ae87a',icon:'◇'},knowledge:{label:'Knowledge & Truth',color:'#b89aff',icon:'△'},existence:{label:'Existence & Freedom',color:'#ff9e6d',icon:'○'},aesthetics:{label:'Aesthetics & Art',color:'#6dccff',icon:'☆'}};
+
+const thinkers=[
+  {id:'socrates',name:'Socrates',dates:'470–399 BCE',era:'ancient',school:'Classical Greek',x:120,y:380,ideas:['Socratic method','Examined life','Ethical intellectualism'],summary:'Turned philosophy toward ethics and self-knowledge through relentless questioning.'},
+  {id:'plato',name:'Plato',dates:'428–348 BCE',era:'ancient',school:'Platonism',x:220,y:280,ideas:['Theory of Forms','Philosopher-king','Allegory of the Cave'],summary:'Reality is a shadow of perfect eternal Forms — the most influential metaphysician in Western history.'},
+  {id:'aristotle',name:'Aristotle',dates:'384–322 BCE',era:'ancient',school:'Peripatetic',x:350,y:330,ideas:['Virtue ethics','Logic','Hylomorphism','Teleology'],summary:'Grounded philosophy in observation, logic, and the pursuit of human flourishing.'},
+  {id:'epicurus',name:'Epicurus',dates:'341–270 BCE',era:'ancient',school:'Epicureanism',x:100,y:210,ideas:['Ataraxia','Pleasure principle','Atomic materialism'],summary:'Pleasure — as the absence of pain — is the highest good, pursued through moderation.'},
+  {id:'zeno',name:'Zeno of Citium',dates:'334–262 BCE',era:'ancient',school:'Stoicism',x:280,y:170,ideas:['Stoic ethics','Logos','Apatheia'],summary:'Founded Stoicism: virtue aligned with rational nature is the sole good.'},
+  {id:'augustine',name:'Augustine',dates:'354–430',era:'medieval',school:'Christian Platonism',x:460,y:220,ideas:['Original sin','Divine illumination','City of God'],summary:'Fused Platonic philosophy with Christian theology for a millennium.'},
+  {id:'aquinas',name:'Thomas Aquinas',dates:'1225–1274',era:'medieval',school:'Scholasticism',x:530,y:340,ideas:['Five Ways','Natural law','Faith and reason'],summary:'Synthesized Aristotelian philosophy with Christian theology.'},
+  {id:'descartes',name:'Descartes',dates:'1596–1650',era:'earlyModern',school:'Rationalism',x:640,y:190,ideas:['Cogito ergo sum','Mind-body dualism','Methodic doubt'],summary:'Rebuilt knowledge from radical doubt, arriving at the certainty of thought.'},
+  {id:'spinoza',name:'Spinoza',dates:'1632–1677',era:'earlyModern',school:'Rationalism',x:720,y:310,ideas:['Substance monism','Determinism','God-or-Nature'],summary:"Identified God with Nature — one of history's most rigorous metaphysical systems."},
+  {id:'hume',name:'Hume',dates:'1711–1776',era:'earlyModern',school:'Empiricism',x:770,y:150,ideas:['Problem of induction','Bundle theory','Is–ought gap'],summary:'The great skeptic who challenged causation and woke Kant from his dogmatic slumber.'},
+  {id:'kant',name:'Kant',dates:'1724–1804',era:'earlyModern',school:'Transcendental Idealism',x:870,y:270,ideas:['Categorical imperative','Synthetic a priori','Noumena/phenomena'],summary:'The mind actively structures experience — a Copernican revolution in philosophy.'},
+  {id:'hegel',name:'Hegel',dates:'1770–1831',era:'modern',school:'German Idealism',x:980,y:210,ideas:['Dialectic','Absolute Spirit','Master–slave dialectic'],summary:"History as Spirit's self-realization through dialectical opposition."},
+  {id:'marx',name:'Marx',dates:'1818–1883',era:'modern',school:'Historical Materialism',x:1070,y:350,ideas:['Class struggle','Alienation','Surplus value'],summary:'History is driven by economic forces and class conflict.'},
+  {id:'nietzsche',name:'Nietzsche',dates:'1844–1900',era:'modern',school:'Vitalism',x:1010,y:100,ideas:['Will to power','Eternal recurrence','Übermensch','Death of God'],summary:'Proclaimed the death of God and called for the creation of new values.'},
+  {id:'schopenhauer',name:'Schopenhauer',dates:'1788–1860',era:'modern',school:'Pessimism',x:910,y:410,ideas:['Will to live','Aesthetic contemplation'],summary:'The world is driven by a blind Will, making suffering inevitable.'},
+  {id:'kierkegaard',name:'Kierkegaard',dates:'1813–1855',era:'modern',school:'Existentialism',x:1100,y:150,ideas:['Leap of faith','Anxiety','Stages of existence'],summary:'Placed individual subjective experience and radical choice at the heart of philosophy.'},
+  {id:'freud',name:'Freud',dates:'1856–1939',era:'modern',school:'Psychoanalysis',x:960,y:480,ideas:['Unconscious','Drive theory','Oedipus complex'],summary:'Revealed the unconscious drives beneath rational self-understanding.'},
+  {id:'wittgenstein',name:'Wittgenstein',dates:'1889–1951',era:'contemporary',school:'Analytic Philosophy',x:1200,y:290,ideas:['Language games','Private language argument'],summary:'Meaning arises from use, not reference — revolutionized philosophy twice.'},
+  {id:'heidegger',name:'Heidegger',dates:'1889–1976',era:'contemporary',school:'Phenomenology',x:1140,y:430,ideas:['Dasein','Being-in-the-world','Thrownness'],summary:'Asked "What is Being?" — and argued Western philosophy had forgotten it.'},
+  {id:'sartre',name:'Sartre',dates:'1905–1980',era:'contemporary',school:'Existentialism',x:1260,y:130,ideas:['Existence precedes essence','Bad faith','Radical freedom'],summary:'Humans are condemned to be free — existence has no preset meaning.'},
+  {id:'beauvoir',name:'Simone de Beauvoir',dates:'1908–1986',era:'contemporary',school:'Existential Feminism',x:1340,y:200,ideas:['The Other','Situated freedom','Ethics of ambiguity'],summary:'One is not born, but rather becomes, a woman.'},
+  {id:'foucault',name:'Foucault',dates:'1926–1984',era:'contemporary',school:'Post-structuralism',x:1300,y:370,ideas:['Power/knowledge','Biopower','Genealogy','Disciplinary society'],summary:'Power operates through knowledge systems and the very categories of self-understanding.'},
+  {id:'deleuze',name:'Deleuze',dates:'1925–1995',era:'contemporary',school:'Post-structuralism',x:1380,y:470,ideas:['Rhizome','Deterritorialization','Desire as production','Body without Organs'],summary:'Philosophy as the creation of concepts — thought as nomadic, productive, and immanent.'},
+  {id:'derrida',name:'Derrida',dates:'1930–2004',era:'contemporary',school:'Deconstruction',x:1420,y:330,ideas:['Deconstruction','Différance','Logocentrism'],summary:'Meaning is always deferred and unstable, undermining Western metaphysics from within.'},
+  {id:'barthes',name:'Roland Barthes',dates:'1915–1980',era:'contemporary',school:'Semiotics',x:1460,y:200,ideas:['Death of the Author','Mythologies','Punctum/Studium','Pleasure of the Text'],summary:'Dismantled the authority of authorship and revealed the mythologies of everyday life.'},
+  {id:'agamben',name:'Agamben',dates:'1942–',era:'contemporary',school:'Political Philosophy',x:1500,y:410,ideas:['Homo Sacer','Bare life','State of exception'],summary:'Revealed how sovereign power operates by reducing humans to bare biological life.'},
+  {id:'nancy',name:'Jean-Luc Nancy',dates:'1940–2021',era:'contemporary',school:'Deconstruction',x:1520,y:280,ideas:['Being singular plural','Inoperative community','Corpus/touch'],summary:'Rethought community and the body beyond both individualism and collectivism.'},
+  {id:'sade',name:'Marquis de Sade',dates:'1740–1814',era:'earlyModern',school:'Libertinism',x:810,y:440,ideas:['Radical libertinism','Nature as cruelty','Transgression'],summary:"Pushed Enlightenment reason to its darkest extremes, exposing desire beneath morality."},
+  {id:'arendt',name:'Hannah Arendt',dates:'1906–1975',era:'contemporary',school:'Political Philosophy',x:1180,y:170,ideas:['Banality of evil','Public realm','Vita activa'],summary:"Distinguished labor, work, and action — and warned of evil's bureaucratic normalcy."},
+];
+
+const concepts=[
+  {id:'c_biopolitics',name:'Biopolitics',theme:'body',x:1400,y:560,desc:'How political power governs biological life — populations, bodies, health, death.',takes:[
+    {tid:'foucault',take:'Biopower: the state manages populations through statistics, hygiene, regulation'},
+    {tid:'agamben',take:'Bare life: sovereign power reduces humans to mere biological existence (homo sacer)'},
+    {tid:'deleuze',take:'Body without Organs: desire produces new modes of bodily life beyond state capture'},
+    {tid:'arendt',take:'Vita activa: political life as action, distinct from biological labor'},
+    {tid:'nancy',take:'Corpus: the body as shared exposure, touch as the ground of being-together'},
+  ]},
+  {id:'c_writing',name:'Writing & Textuality',theme:'language',x:1480,y:120,desc:'The nature of writing, authorship, and how texts produce meaning.',takes:[
+    {tid:'derrida',take:"Writing precedes speech — there is nothing outside the text"},
+    {tid:'barthes',take:"The Death of the Author: meaning belongs to the reader, not the writer's intentions"},
+    {tid:'foucault',take:'What is an Author? — authorship as a function of discourse, not a person'},
+    {tid:'nancy',take:"Writing as the body's exposure — inscription on/of the corpus"},
+    {tid:'deleuze',take:'Literature as a line of flight — writing deterritorializes language'},
+  ]},
+  {id:'c_desire',name:'Desire & Drive',theme:'desire',x:1100,y:560,desc:'What moves us — desire, drives, pleasure, and their relation to power and subjectivity.',takes:[
+    {tid:'freud',take:'Drives are the motor of psychic life — Eros and Thanatos in eternal conflict'},
+    {tid:'deleuze',take:'Desire is productive and affirmative, not lack — desire assembles, creates, connects'},
+    {tid:'sade',take:"Desire as nature's cruelty — push libertine freedom to its logical extreme"},
+    {tid:'barthes',take:'The pleasure of the text: reading as erotic encounter, jouissance beyond meaning'},
+    {tid:'schopenhauer',take:'The Will is blind desire — the root of all suffering'},
+    {tid:'nietzsche',take:'Will to power: not desire for domination but the creative drive to overcome'},
+  ]},
+  {id:'c_sovereignty',name:'Sovereignty & Law',theme:'power',x:1240,y:540,desc:'Who holds ultimate authority, how law constitutes power, and the limits of the political.',takes:[
+    {tid:'agamben',take:"The sovereign decides the state of exception — law's power to suspend itself"},
+    {tid:'foucault',take:'Sovereignty gives way to disciplinary power, then biopolitical governance'},
+    {tid:'marx',take:'The state is the executive committee of the ruling class'},
+    {tid:'arendt',take:'True political power is collective action, not sovereign command'},
+    {tid:'derrida',take:'The force of law rests on a mystical foundation — justice is always yet to come'},
+  ]},
+  {id:'c_freedom',name:'Freedom & Authenticity',theme:'existence',x:1220,y:40,desc:'What it means to be free, to choose, to live authentically vs. in bad faith.',takes:[
+    {tid:'sartre',take:'Radical freedom: we are condemned to choose, even not choosing is a choice'},
+    {tid:'beauvoir',take:'Situated freedom: freedom is real but always constrained by oppressive structures'},
+    {tid:'kierkegaard',take:'Authentic existence requires the leap of faith — anxiety before infinite possibility'},
+    {tid:'heidegger',take:'Authenticity means confronting one\'s own death and resisting the "They"'},
+    {tid:'kant',take:'Freedom is autonomy — rational self-legislation through the moral law'},
+    {tid:'spinoza',take:"Freedom is understanding necessity — acting from the laws of one's own nature"},
+  ]},
+  {id:'c_truth',name:'Truth & Epistemology',theme:'knowledge',x:680,y:80,desc:'What truth is, how we know it, and whether certainty is possible.',takes:[
+    {tid:'plato',take:'Truth is recollection of eternal Forms — knowledge vs. mere opinion'},
+    {tid:'descartes',take:'Methodic doubt leads to the one certainty: I think, therefore I am'},
+    {tid:'hume',take:'We can never know causes — only observe constant conjunction of events'},
+    {tid:'kant',take:'We know phenomena structured by the mind, never things-in-themselves'},
+    {tid:'nietzsche',take:'There are no facts, only interpretations — truth is a mobile army of metaphors'},
+    {tid:'foucault',take:'Truth is produced by power/knowledge regimes, not discovered'},
+    {tid:'wittgenstein',take:'Whereof one cannot speak, thereof one must be silent'},
+  ]},
+  {id:'c_other',name:'The Other & Alterity',theme:'ethics',x:1460,y:60,desc:'How we relate to what is radically different — the stranger, the excluded, the face.',takes:[
+    {tid:'beauvoir',take:'Woman is constituted as the Other — the second sex defined against the masculine subject'},
+    {tid:'derrida',take:'Hospitality toward the other is the impossible yet necessary ground of ethics'},
+    {tid:'nancy',take:'Being is always being-with — singularity is constituted by exposure to others'},
+    {tid:'sartre',take:'Hell is other people — the gaze of the Other objectifies and threatens my freedom'},
+    {tid:'hegel',take:'Self-consciousness arises only through recognition by another — the master-slave dialectic'},
+  ]},
+  {id:'c_aesthetics',name:'Art & Aesthetic Experience',theme:'aesthetics',x:850,y:540,desc:"The nature of beauty, sublimity, and art's role in human experience and truth.",takes:[
+    {tid:'kant',take:'The sublime overwhelms our senses but elevates reason — disinterested aesthetic judgment'},
+    {tid:'hegel',take:'Art is Spirit\'s self-expression — but philosophy eventually supersedes art'},
+    {tid:'schopenhauer',take:"Art temporarily frees us from the Will's tyranny through pure contemplation"},
+    {tid:'nietzsche',take:'Art is the highest task — the Apollonian and Dionysian drives create tragedy'},
+    {tid:'heidegger',take:'Art opens a world — it is the setting-into-work of truth'},
+    {tid:'barthes',take:'The punctum: the detail in a photograph that wounds, that pierces through meaning'},
+    {tid:'deleuze',take:'Art creates percepts and affects — sensations that exist independent of experience'},
+  ]},
+];
+
+const philLinks=[
+  {s:'socrates',t:'plato',type:'influence'},{s:'plato',t:'aristotle',type:'influence'},{s:'aristotle',t:'plato',type:'opposition'},
+  {s:'plato',t:'augustine',type:'influence'},{s:'aristotle',t:'aquinas',type:'influence'},{s:'augustine',t:'aquinas',type:'influence'},
+  {s:'plato',t:'zeno',type:'influence'},{s:'socrates',t:'epicurus',type:'influence'},{s:'epicurus',t:'zeno',type:'opposition'},
+  {s:'aquinas',t:'descartes',type:'influence'},{s:'descartes',t:'spinoza',type:'influence'},{s:'descartes',t:'hume',type:'opposition'},
+  {s:'hume',t:'kant',type:'influence'},{s:'descartes',t:'kant',type:'influence'},{s:'spinoza',t:'kant',type:'influence'},
+  {s:'kant',t:'hegel',type:'synthesis'},{s:'hegel',t:'marx',type:'reinterpret'},{s:'kant',t:'schopenhauer',type:'influence'},
+  {s:'schopenhauer',t:'nietzsche',type:'influence'},{s:'hegel',t:'nietzsche',type:'opposition'},{s:'hegel',t:'kierkegaard',type:'opposition'},
+  {s:'nietzsche',t:'heidegger',type:'reinterpret'},{s:'kierkegaard',t:'heidegger',type:'influence'},{s:'heidegger',t:'sartre',type:'influence'},
+  {s:'kierkegaard',t:'sartre',type:'influence'},{s:'nietzsche',t:'foucault',type:'reinterpret'},{s:'marx',t:'foucault',type:'reinterpret'},
+  {s:'heidegger',t:'derrida',type:'reinterpret'},{s:'foucault',t:'derrida',type:'synthesis'},{s:'sartre',t:'beauvoir',type:'synthesis'},
+  {s:'hegel',t:'beauvoir',type:'influence'},{s:'kant',t:'wittgenstein',type:'influence'},{s:'nietzsche',t:'sartre',type:'influence'},
+  {s:'plato',t:'descartes',type:'influence'},{s:'nietzsche',t:'deleuze',type:'reinterpret'},{s:'spinoza',t:'deleuze',type:'reinterpret'},
+  {s:'freud',t:'deleuze',type:'reinterpret'},{s:'foucault',t:'agamben',type:'reinterpret'},{s:'heidegger',t:'nancy',type:'influence'},
+  {s:'derrida',t:'nancy',type:'synthesis'},{s:'freud',t:'barthes',type:'influence'},{s:'heidegger',t:'arendt',type:'influence'},
+  {s:'kant',t:'arendt',type:'influence'},{s:'sade',t:'freud',type:'influence'},{s:'freud',t:'foucault',type:'reinterpret'},
+  {s:'deleuze',t:'derrida',type:'opposition'},
+];
+
+const edgeColors={influence:'#3d8ef0',opposition:'#e85d5d',synthesis:'#9b7ae8',reinterpret:'#2dbf8a'};
+
+// ═══ NEBULA ═══
+const nC=document.getElementById('nebula'),nX=nC.getContext('2d');let stars=[];
+function initN(){nC.width=innerWidth;nC.height=innerHeight;stars=Array.from({length:350},()=>({x:Math.random()*nC.width,y:Math.random()*nC.height,r:Math.random()*1+.2,o:Math.random()*.4+.08,sp:Math.random()*.0006+.0002,ph:Math.random()*Math.PI*2}));}
+function drawN(t){nX.clearRect(0,0,nC.width,nC.height);for(const s of stars){const o=s.o+Math.sin(t*s.sp+s.ph)*.15;nX.beginPath();nX.arc(s.x,s.y,s.r,0,Math.PI*2);nX.fillStyle=`rgba(210,206,198,${Math.max(0,o)})`;nX.fill();}requestAnimationFrame(drawN);}
+initN();requestAnimationFrame(drawN);addEventListener('resize',initN);
+
+// ═══ SVG ═══
+const svg=document.getElementById('graph'),ns='http://www.w3.org/2000/svg';
+let tf={x:0,y:0,k:1},panning=false,panSt={x:0,y:0},selected=null;
+const gMain=document.createElementNS(ns,'g');gMain.id='main';svg.appendChild(gMain);
+const gCE=document.createElementNS(ns,'g');gCE.classList.add('lyr-ce');gMain.appendChild(gCE);
+const gPE=document.createElementNS(ns,'g');gPE.classList.add('lyr-pe');gMain.appendChild(gPE);
+const gCN=document.createElementNS(ns,'g');gCN.classList.add('lyr-cn');gMain.appendChild(gCN);
+const gPN=document.createElementNS(ns,'g');gPN.classList.add('lyr-pn');gMain.appendChild(gPN);
+
+const layerState={philosophers:true,concepts:true,philLinks:true,conceptLinks:true};
+
+// Draw phil edges
+philLinks.forEach(c=>{const a=thinkers.find(p=>p.id===c.s),b=thinkers.find(p=>p.id===c.t);if(!a||!b)return;
+  const ln=document.createElementNS(ns,'line');ln.setAttribute('x1',a.x);ln.setAttribute('y1',a.y);ln.setAttribute('x2',b.x);ln.setAttribute('y2',b.y);
+  ln.setAttribute('stroke',edgeColors[c.type]);ln.setAttribute('stroke-width','1');ln.setAttribute('stroke-opacity','0.2');
+  ln.dataset.source=c.s;ln.dataset.target=c.t;ln.dataset.type=c.type;
+  if(c.type==='opposition')ln.setAttribute('stroke-dasharray','6 4');if(c.type==='reinterpret')ln.setAttribute('stroke-dasharray','2 4');
+  gPE.appendChild(ln);});
+
+// Draw concept edges
+concepts.forEach(con=>{con.takes.forEach(tk=>{const th=thinkers.find(p=>p.id===tk.tid);if(!th)return;
+  const ln=document.createElementNS(ns,'line');ln.setAttribute('x1',con.x);ln.setAttribute('y1',con.y);ln.setAttribute('x2',th.x);ln.setAttribute('y2',th.y);
+  ln.setAttribute('stroke',themes[con.theme].color);ln.setAttribute('stroke-width','0.7');ln.setAttribute('stroke-opacity','0.1');ln.setAttribute('stroke-dasharray','1 3');
+  ln.dataset.concept=con.id;ln.dataset.thinker=tk.tid;gCE.appendChild(ln);});});
+
+// Draw philosopher nodes
+thinkers.forEach(p=>{const g=document.createElementNS(ns,'g');g.classList.add('phil-node');g.dataset.id=p.id;g.dataset.era=p.era;g.style.cursor='pointer';
+  const gl=document.createElementNS(ns,'circle');gl.setAttribute('cx',p.x);gl.setAttribute('cy',p.y);gl.setAttribute('r','16');gl.setAttribute('fill',eras[p.era].color);gl.setAttribute('opacity','0.06');g.appendChild(gl);
+  const ci=document.createElementNS(ns,'circle');ci.setAttribute('cx',p.x);ci.setAttribute('cy',p.y);ci.setAttribute('r','6');ci.setAttribute('fill',eras[p.era].color);ci.setAttribute('opacity','0.85');ci.setAttribute('stroke',eras[p.era].color);ci.setAttribute('stroke-width','0.8');ci.setAttribute('stroke-opacity','0.3');g.appendChild(ci);
+  const co=document.createElementNS(ns,'circle');co.setAttribute('cx',p.x);co.setAttribute('cy',p.y);co.setAttribute('r','2');co.setAttribute('fill','#fff');co.setAttribute('opacity','0.7');g.appendChild(co);
+  const tx=document.createElementNS(ns,'text');tx.setAttribute('x',p.x);tx.setAttribute('y',p.y+20);tx.setAttribute('text-anchor','middle');tx.setAttribute('fill','#bbb8b2');tx.setAttribute('font-family','Cormorant Garamond,serif');tx.setAttribute('font-size','11');tx.setAttribute('opacity','0.75');tx.textContent=p.name;g.appendChild(tx);
+  g.addEventListener('mouseenter',e=>showTip(e,p.name,p.dates,p.school));g.addEventListener('mouseleave',hideTip);g.addEventListener('click',()=>selectPhil(p));gPN.appendChild(g);});
+
+// Draw concept nodes
+concepts.forEach(con=>{const g=document.createElementNS(ns,'g');g.classList.add('concept-node');g.dataset.id=con.id;g.dataset.theme=con.theme;g.style.cursor='pointer';
+  const tc=themes[con.theme].color;
+  const ri=document.createElementNS(ns,'circle');ri.setAttribute('cx',con.x);ri.setAttribute('cy',con.y);ri.setAttribute('r','22');ri.setAttribute('fill','none');ri.setAttribute('stroke',tc);ri.setAttribute('stroke-width','1.2');ri.setAttribute('stroke-opacity','0.2');ri.setAttribute('stroke-dasharray','3 3');g.appendChild(ri);
+  const gl=document.createElementNS(ns,'circle');gl.setAttribute('cx',con.x);gl.setAttribute('cy',con.y);gl.setAttribute('r','15');gl.setAttribute('fill',tc);gl.setAttribute('opacity','0.06');g.appendChild(gl);
+  const ci=document.createElementNS(ns,'circle');ci.setAttribute('cx',con.x);ci.setAttribute('cy',con.y);ci.setAttribute('r','5');ci.setAttribute('fill',tc);ci.setAttribute('opacity','0.5');g.appendChild(ci);
+  const ic=document.createElementNS(ns,'text');ic.setAttribute('x',con.x);ic.setAttribute('y',con.y+4);ic.setAttribute('text-anchor','middle');ic.setAttribute('fill',tc);ic.setAttribute('font-size','10');ic.setAttribute('opacity','0.9');ic.textContent=themes[con.theme].icon;g.appendChild(ic);
+  const tx=document.createElementNS(ns,'text');tx.setAttribute('x',con.x);tx.setAttribute('y',con.y+36);tx.setAttribute('text-anchor','middle');tx.setAttribute('fill',tc);tx.setAttribute('font-family','Nunito Sans,sans-serif');tx.setAttribute('font-size','9.5');tx.setAttribute('font-weight','400');tx.setAttribute('opacity','0.65');tx.setAttribute('letter-spacing','0.5');tx.textContent=con.name.toUpperCase();g.appendChild(tx);
+  g.addEventListener('mouseenter',e=>showTip(e,con.name,themes[con.theme].label,con.takes.length+' thinkers'));g.addEventListener('mouseleave',hideTip);g.addEventListener('click',()=>selectCon(con));gCN.appendChild(g);});
+
+// ═══ PAN/ZOOM ═══
+function applyTf(){gMain.setAttribute('transform',`translate(${tf.x},${tf.y}) scale(${tf.k})`);}
+function centerGraph(){const ax=[...thinkers.map(p=>p.x),...concepts.map(c=>c.x)],ay=[...thinkers.map(p=>p.y),...concepts.map(c=>c.y)];const cx=(Math.min(...ax)+Math.max(...ax))/2,cy=(Math.min(...ay)+Math.max(...ay))/2;const rx=Math.max(...ax)-Math.min(...ax)+240,ry=Math.max(...ay)-Math.min(...ay)+240;tf.k=Math.min(innerWidth/rx,innerHeight/ry,1.1)*.8;tf.x=innerWidth/2-cx*tf.k;tf.y=innerHeight/2-cy*tf.k;applyTf();}
+svg.addEventListener('mousedown',e=>{if(!e.target.closest('.phil-node,.concept-node')){panning=true;panSt={x:e.clientX-tf.x,y:e.clientY-tf.y};}});
+svg.addEventListener('mousemove',e=>{if(panning){tf.x=e.clientX-panSt.x;tf.y=e.clientY-panSt.y;applyTf();}});
+svg.addEventListener('mouseup',()=>panning=false);svg.addEventListener('mouseleave',()=>panning=false);
+svg.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY>0?.92:1.08,nk=Math.max(.25,Math.min(3.5,tf.k*f));tf.x=e.clientX-(e.clientX-tf.x)*(nk/tf.k);tf.y=e.clientY-(e.clientY-tf.y)*(nk/tf.k);tf.k=nk;applyTf();},{passive:false});
+let tDist=0;svg.addEventListener('touchstart',e=>{if(e.touches.length===1){panning=true;panSt={x:e.touches[0].clientX-tf.x,y:e.touches[0].clientY-tf.y};}else if(e.touches.length===2){panning=false;const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;tDist=Math.sqrt(dx*dx+dy*dy);}},{passive:false});
+svg.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===1&&panning){tf.x=e.touches[0].clientX-panSt.x;tf.y=e.touches[0].clientY-panSt.y;applyTf();}else if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,d=Math.sqrt(dx*dx+dy*dy);const f=d/tDist,nk=Math.max(.25,Math.min(3.5,tf.k*f));const mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;tf.x=mx-(mx-tf.x)*(nk/tf.k);tf.y=my-(my-tf.y)*(nk/tf.k);tf.k=nk;tDist=d;applyTf();}},{passive:false});
+svg.addEventListener('touchend',()=>panning=false);
+
+// ═══ TOOLTIP ═══
+const tip=document.getElementById('tip');
+function showTip(e,n,sub,type){if(selected)return;document.getElementById('tip-name').textContent=n;document.getElementById('tip-sub').textContent=sub;document.getElementById('tip-type').textContent=type;tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-8)+'px';tip.classList.add('on');}
+function hideTip(){tip.classList.remove('on');}
+
+// ═══ SELECTION ═══
+function dimAll(){gPN.querySelectorAll('.phil-node').forEach(n=>{n.style.opacity='0.07';n.style.transition='opacity .3s';});gCN.querySelectorAll('.concept-node').forEach(n=>{n.style.opacity='0.07';n.style.transition='opacity .3s';});gPE.querySelectorAll('line').forEach(l=>{l.setAttribute('stroke-opacity','0.02');l.setAttribute('stroke-width','1');});gCE.querySelectorAll('line').forEach(l=>{l.setAttribute('stroke-opacity','0.015');l.setAttribute('stroke-width','0.7');});}
+function clearAll(){gPN.querySelectorAll('.phil-node').forEach(n=>{n.style.opacity='1';n.style.transition='opacity .3s';});gCN.querySelectorAll('.concept-node').forEach(n=>{n.style.opacity='1';n.style.transition='opacity .3s';});gPE.querySelectorAll('line').forEach(l=>{l.setAttribute('stroke-opacity','0.2');l.setAttribute('stroke-width','1');});gCE.querySelectorAll('line').forEach(l=>{l.setAttribute('stroke-opacity','0.1');l.setAttribute('stroke-width','0.7');});applyLV();}
+
+function selectPhil(p){selected={type:'phil',data:p};hideTip();dimAll();
+  const conn=new Set([p.id]);philLinks.forEach(c=>{if(c.s===p.id)conn.add(c.t);if(c.t===p.id)conn.add(c.s);});
+  const relC=new Set();concepts.forEach(con=>{if(con.takes.some(tk=>tk.tid===p.id))relC.add(con.id);});
+  gPN.querySelectorAll('.phil-node').forEach(n=>{n.style.opacity=conn.has(n.dataset.id)?'1':'0.07';});
+  gPE.querySelectorAll('line').forEach(l=>{const h=(l.dataset.source===p.id||l.dataset.target===p.id);l.setAttribute('stroke-opacity',h?'0.55':'0.02');l.setAttribute('stroke-width',h?'1.8':'1');});
+  gCN.querySelectorAll('.concept-node').forEach(n=>{n.style.opacity=relC.has(n.dataset.id)?'1':'0.07';});
+  gCE.querySelectorAll('line').forEach(l=>{const h=l.dataset.thinker===p.id;l.setAttribute('stroke-opacity',h?'0.3':'0.015');l.setAttribute('stroke-width',h?'1.2':'0.7');});
+  showPhilPanel(p);}
+
+function selectCon(con){selected={type:'concept',data:con};hideTip();dimAll();
+  const relT=new Set(con.takes.map(tk=>tk.tid));
+  gCN.querySelectorAll('.concept-node').forEach(n=>{n.style.opacity=n.dataset.id===con.id?'1':'0.07';});
+  gPN.querySelectorAll('.phil-node').forEach(n=>{n.style.opacity=relT.has(n.dataset.id)?'1':'0.07';});
+  gCE.querySelectorAll('line').forEach(l=>{const h=l.dataset.concept===con.id;l.setAttribute('stroke-opacity',h?'0.35':'0.015');l.setAttribute('stroke-width',h?'1.3':'0.7');});
+  gPE.querySelectorAll('line').forEach(l=>{const sI=relT.has(l.dataset.source),tI=relT.has(l.dataset.target);l.setAttribute('stroke-opacity',(sI&&tI)?'0.25':'0.02');});
+  showConPanel(con);}
+
+// ═══ PANELS ═══
+const panel=document.getElementById('panel'),panelBody=document.getElementById('panel-body');
+
+function showPhilPanel(p){
+  const pConns=philLinks.filter(c=>c.s===p.id||c.t===p.id).map(c=>{const oid=c.s===p.id?c.t:c.s;const o=thinkers.find(t=>t.id===oid);if(!o)return'';const dir=c.s===p.id?'→':'←';return`<div class="p-conn" onclick="navTo('phil','${oid}')"><div class="p-conn-dot" style="background:${edgeColors[c.type]}"></div><span>${dir} ${o.name}</span><span class="p-conn-type">${c.type}</span></div>`;}).join('');
+  const rCon=concepts.filter(cn=>cn.takes.some(tk=>tk.tid===p.id)).map(cn=>`<div class="p-conn" onclick="navTo('concept','${cn.id}')"><div class="p-conn-dot" style="background:${themes[cn.theme].color}"></div><span>${cn.name}</span><span class="p-conn-type">theme</span></div>`).join('');
+  const tags=p.ideas.map(i=>`<span class="p-tag">${i}</span>`).join('');
+  panelBody.innerHTML=`<div class="p-era">${eras[p.era].label}</div><div class="p-name">${p.name}</div><div class="p-dates">${p.dates}</div><div class="p-school">${p.school}</div><div class="p-summary">${p.summary}</div><div class="p-section">Key Ideas</div><div class="p-tags">${tags}</div><div class="p-section">Philosophical Connections</div><div class="p-conn-list">${pConns}</div>${rCon?`<div class="p-section">Shared Themes</div><div class="p-conn-list">${rCon}</div>`:''}`;
+  panel.classList.add('open');}
+
+function showConPanel(con){const tc=themes[con.theme].color;
+  const rows=con.takes.map(tk=>{const th=thinkers.find(t=>t.id===tk.tid);if(!th)return'';return`<div class="p-thinker-row" onclick="navTo('phil','${tk.tid}')"><div class="p-thinker-dot" style="background:${eras[th.era].color}"></div><span class="p-thinker-name">${th.name}</span></div><div class="p-thinker-take">${tk.take}</div>`;}).join('');
+  panelBody.innerHTML=`<div class="p-concept-ring" style="border-color:${tc};color:${tc};">${themes[con.theme].icon}</div><div class="p-name" style="font-size:28px;">${con.name}</div><div class="p-dates" style="color:${tc};">${themes[con.theme].label}</div><div class="p-summary">${con.desc}</div><div class="p-section">How Different Thinkers Approach This</div><div class="p-thinkers-grid">${rows}</div>`;
+  panel.classList.add('open');}
+
+window.navTo=function(type,id){if(type==='phil'){const p=thinkers.find(t=>t.id===id);if(p)selectPhil(p);}else{const c=concepts.find(cn=>cn.id===id);if(c)selectCon(c);}};
+document.getElementById('panel-close').addEventListener('click',()=>{panel.classList.remove('open');selected=null;clearAll();});
+svg.addEventListener('click',e=>{if(!e.target.closest('.phil-node,.concept-node')){panel.classList.remove('open');selected=null;clearAll();}});
+
+// ═══ LAYER TOGGLES ═══
+const layerCfg=[{key:'philosophers',label:'Philosophers',color:eras.contemporary.color},{key:'concepts',label:'Concept Themes',color:themes.desire.color},{key:'philLinks',label:'Philosopher Links',color:'#3d8ef0'},{key:'conceptLinks',label:'Theme Links',color:'#888'}];
+const ltEl=document.getElementById('layer-toggle');
+layerCfg.forEach(lc=>{const btn=document.createElement('button');btn.className='layer-btn active';btn.dataset.layer=lc.key;btn.innerHTML=`<div class="dot" style="border-color:${lc.color};background:${lc.color}"></div>${lc.label}`;btn.addEventListener('click',()=>{layerState[lc.key]=!layerState[lc.key];btn.classList.toggle('active',layerState[lc.key]);btn.querySelector('.dot').style.background=layerState[lc.key]?lc.color:'transparent';applyLV();});ltEl.appendChild(btn);});
+function applyLV(){gPN.style.display=layerState.philosophers?'':'none';gCN.style.display=layerState.concepts?'':'none';gPE.style.display=layerState.philLinks?'':'none';gCE.style.display=layerState.conceptLinks?'':'none';}
+
+// ═══ ERA FILTERS ═══
+let activeEra=null;const eraBar=document.getElementById('era-bar');
+const allCh=document.createElement('button');allCh.className='era-chip active';allCh.textContent='All Eras';allCh.addEventListener('click',()=>filterEra(null));eraBar.appendChild(allCh);
+Object.entries(eras).forEach(([k,v])=>{const ch=document.createElement('button');ch.className='era-chip';ch.textContent=v.label;ch.dataset.era=k;ch.addEventListener('click',()=>filterEra(k));eraBar.appendChild(ch);});
+function filterEra(era){activeEra=era;eraBar.querySelectorAll('.era-chip').forEach(c=>c.classList.remove('active'));if(!era)eraBar.querySelector('.era-chip').classList.add('active');else eraBar.querySelector(`[data-era="${era}"]`).classList.add('active');
+  gPN.querySelectorAll('.phil-node').forEach(n=>{n.style.opacity=(!era||n.dataset.era===era)?'1':'0.07';n.style.transition='opacity .3s';});
+  gPE.querySelectorAll('line').forEach(l=>{if(!era){l.setAttribute('stroke-opacity','0.2');return;}const sP=thinkers.find(p=>p.id===l.dataset.source),tP=thinkers.find(p=>p.id===l.dataset.target);const h=(sP&&sP.era===era)||(tP&&tP.era===era);l.setAttribute('stroke-opacity',h?'0.35':'0.02');});
+  gCN.querySelectorAll('.concept-node').forEach(n=>{if(!era){n.style.opacity='1';n.style.transition='opacity .3s';return;}const con=concepts.find(c=>c.id===n.dataset.id);const h=con&&con.takes.some(tk=>{const th=thinkers.find(t=>t.id===tk.tid);return th&&th.era===era;});n.style.opacity=h?'1':'0.07';n.style.transition='opacity .3s';});
+  gCE.querySelectorAll('line').forEach(l=>{if(!era){l.setAttribute('stroke-opacity','0.1');return;}const th=thinkers.find(p=>p.id===l.dataset.thinker);l.setAttribute('stroke-opacity',(th&&th.era===era)?'0.25':'0.02');});}
+
+// ═══ SEARCH ═══
+document.getElementById('search').addEventListener('input',e=>{const q=e.target.value.toLowerCase().trim();if(!q){clearAll();if(activeEra)filterEra(activeEra);return;}
+  const pm=new Set(thinkers.filter(p=>p.name.toLowerCase().includes(q)||p.school.toLowerCase().includes(q)||p.ideas.some(i=>i.toLowerCase().includes(q))).map(p=>p.id));
+  const cm=new Set(concepts.filter(c=>c.name.toLowerCase().includes(q)||themes[c.theme].label.toLowerCase().includes(q)||c.takes.some(tk=>tk.take.toLowerCase().includes(q))).map(c=>c.id));
+  concepts.forEach(c=>{if(cm.has(c.id))c.takes.forEach(tk=>pm.add(tk.tid));});
+  gPN.querySelectorAll('.phil-node').forEach(n=>{n.style.opacity=pm.has(n.dataset.id)?'1':'0.06';n.style.transition='opacity .3s';});
+  gCN.querySelectorAll('.concept-node').forEach(n=>{n.style.opacity=cm.has(n.dataset.id)?'1':'0.06';n.style.transition='opacity .3s';});
+  gPE.querySelectorAll('line').forEach(l=>{l.setAttribute('stroke-opacity',(pm.has(l.dataset.source)&&pm.has(l.dataset.target))?'0.4':'0.02');});
+  gCE.querySelectorAll('line').forEach(l=>{l.setAttribute('stroke-opacity',(cm.has(l.dataset.concept)&&pm.has(l.dataset.thinker))?'0.3':'0.02');});});
+
+centerGraph();
+</script>
+</body>
+</html>
